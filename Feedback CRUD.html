@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback System with CRUD API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            width: 50%;
+            margin-left: 0;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            width: 70%;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        select, button {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        select {
+            margin-right: 10px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .feedback-list p {
+            text-align: left;
+        }
+
+        .delete-btn, .edit-btn {
+            margin-left: 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+        }
+
+        .edit-btn {
+            background-color: #007bff;
+        }
+
+        .feedback-item {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Feedback System</h1>
+
+    <div class="container">
+        <div class="ratings">
+            <h2>Overall Ratings</h2>
+            <div id="overall-ratings"></div>
+        </div>
+
+        <div class="feedback-form">
+            <h2>Feedback Form</h2>
+            <input type="hidden" id="feedbackId" value="">
+            <input type="text" id="name" placeholder="Enter Your Name" required>
+            <br>
+            <label for="rating">Choose your rating:</label>
+            <select id="rating">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+            <button onclick="submitFeedback()">Submit</button>
+        </div>
+
+        <div id="feedbacks">
+            <h2>All Feedbacks</h2>
+            <div id="feedback-list" class="feedback-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize localStorage data if not already set
+        if (!localStorage.getItem('feedbacks')) {
+            localStorage.setItem('feedbacks', JSON.stringify([]));
+        }
+
+        // CRUD operations simulation as a localStorage-based API
+        const api = {
+            getFeedbacks: () => {
+                return JSON.parse(localStorage.getItem('feedbacks'));
+            },
+            createFeedback: (feedback) => {
+                let feedbacks = api.getFeedbacks();
+                feedbacks.push(feedback);
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+            },
+            updateFeedback: (updatedFeedback) => {
+                let feedbacks = api.getFeedbacks();
+                feedbacks = feedbacks.map(feedback =>
+                    feedback.id === updatedFeedback.id ? updatedFeedback : feedback
+                );
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+            },
+            deleteFeedback: (id) => {
+                let feedbacks = api.getFeedbacks();
+                feedbacks = feedbacks.filter(feedback => feedback.id !== id);
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+            }
+        };
+
+        // Fetch feedbacks and overall ratings on page load
+        window.onload = function() {
+            displayFeedbacks();
+            displayOverallRatings();
+        };
+
+        // Function to submit or update feedback
+        function submitFeedback() {
+            const feedbackId = document.getElementById('feedbackId').value;
+            const name = document.getElementById('name').value;
+            const rating = parseInt(document.getElementById('rating').value);
+
+            if (name === '') {
+                alert('Please enter your name');
+                return;
+            }
+
+            if (feedbackId) {
+                // Update feedback
+                const updatedFeedback = { id: parseInt(feedbackId), name: name, rating: rating };
+                api.updateFeedback(updatedFeedback);
+                alert('Feedback updated!');
+            } else {
+                // Create new feedback
+                const newFeedback = { id: Date.now(), name: name, rating: rating };
+                api.createFeedback(newFeedback);
+                alert('Feedback submitted!');
+            }
+
+            displayFeedbacks();
+            displayOverallRatings();
+            resetForm();
+        }
+
+        // Function to display all feedbacks
+        function displayFeedbacks() {
+            const feedbacks = api.getFeedbacks();
+            const feedbackList = document.getElementById('feedback-list');
+            feedbackList.innerHTML = '';  // Clear current list
+
+            feedbacks.forEach(feedback => {
+                feedbackList.innerHTML += `
+                    <div class="feedback-item">
+                        <p>${feedback.name}: ${feedback.rating}/5 
+                        <button class="edit-btn" onclick="editFeedback(${feedback.id})">Edit</button>
+                        <button class="delete-btn" onclick="deleteFeedback(${feedback.id})">Delete</button></p>
+                    </div>
+                `;
+            });
+        }
+
+        // Function to delete feedback
+        function deleteFeedback(id) {
+            api.deleteFeedback(id);
+            displayFeedbacks();
+            displayOverallRatings();
+        }
+
+        // Function to edit feedback (load feedback details into the form)
+        function editFeedback(id) {
+            const feedbacks = api.getFeedbacks();
+            const feedback = feedbacks.find(fb => fb.id === id);
+            document.getElementById('feedbackId').value = feedback.id;
+            document.getElementById('name').value = feedback.name;
+            document.getElementById('rating').value = feedback.rating;
+        }
+
+        // Function to display overall ratings
+        function displayOverallRatings() {
+            const feedbacks = api.getFeedbacks();
+            const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+            feedbacks.forEach(feedback => {
+                ratingCounts[feedback.rating]++;
+            });
+
+            const overallRatings = document.getElementById('overall-ratings');
+            overallRatings.innerHTML = `
+                1 star: ${ratingCounts[1]}<br>
+                2 stars: ${ratingCounts[2]}<br>
+                3 stars: ${ratingCounts[3]}<br>
+                4 stars: ${ratingCounts[4]}<br>
+                5 stars: ${ratingCounts[5]}
+            `;
+        }
+
+        // Reset form after submission or update
+        function resetForm() {
+            document.getElementById('feedbackId').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('rating').value = '1';
+        }
+    </script>
+</body>
+</html>
