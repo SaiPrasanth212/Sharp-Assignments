@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback System with Star Ratings</title>
+    <style>
+        /* Add basic centering for the title */
+        h1 {
+            text-align: center;
+            margin-top: 5vh;
+            /* Reduced margin to remove extra gap */
+        }
+
+        /* Reset margin for the body to remove page gap */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Style for the form input label and input */
+        .input-group {
+            margin: 10px 0;
+        }
+
+        label {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            width: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Centered heading -->
+    <h1>Feedback System</h1>
+
+    <!-- Overall Ratings -->
+    <h2>Overall Ratings</h2>
+    <div id="overall-ratings">
+        * 0<br>
+        ** 0<br>
+        *** 0<br>
+        **** 0<br>
+        ***** 0
+    </div>
+
+    <!-- Feedback Form -->
+    <h2>Feedback Form</h2>
+    <input type="hidden" id="feedbackId" value="">
+    <div class="input-group">
+        <label for="name">Enter Your Name:</label>
+        <input type="text" id="name" required>
+    </div>
+    <br>
+    <label for="rating">Choose your rating:</label>
+    <select id="rating">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+    </select>
+    <button onclick="submitFeedback()">Submit</button>
+
+    <!-- Display All Feedbacks -->
+    <h2>All Feedbacks</h2>
+    <div id="feedback-list"></div>
+
+    <script>
+        // Initialize localStorage data if not already set
+        if (!localStorage.getItem('feedbacks')) {
+            localStorage.setItem('feedbacks', JSON.stringify([]));
+        }
+
+        // CRUD operations simulation as a localStorage-based API
+        const api = {
+            getFeedbacks: () => {
+                return JSON.parse(localStorage.getItem('feedbacks'));
+            },
+            createFeedback: (feedback) => {
+                let feedbacks = api.getFeedbacks();
+                feedbacks.push(feedback);
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+            },
+            updateFeedback: (updatedFeedback) => {
+                let feedbacks = api.getFeedbacks();
+                feedbacks = feedbacks.map(feedback =>
+                    feedback.id === updatedFeedback.id ? updatedFeedback : feedback
+                );
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+            },
+            deleteFeedback: (id) => {
+                let feedbacks = api.getFeedbacks();
+                feedbacks = feedbacks.filter(feedback => feedback.id !== id);
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+            }
+        };
+
+        // Fetch feedbacks and overall ratings on page load
+        window.onload = function () {
+            displayFeedbacks();
+            displayOverallRatings();
+        };
+
+        // Function to submit or update feedback
+        function submitFeedback() {
+            const feedbackId = document.getElementById('feedbackId').value;
+            const name = document.getElementById('name').value;
+            const rating = parseInt(document.getElementById('rating').value);
+
+            if (name === '') {
+                alert('Please enter your name');
+                return;
+            }
+
+            if (feedbackId) {
+                // Update feedback
+                const updatedFeedback = { id: parseInt(feedbackId), name: name, rating: rating };
+                api.updateFeedback(updatedFeedback);
+                alert('Feedback updated!');
+            } else {
+                // Create new feedback
+                const newFeedback = { id: Date.now(), name: name, rating: rating };
+                api.createFeedback(newFeedback);
+                alert('Feedback submitted!');
+            }
+
+            displayFeedbacks();
+            displayOverallRatings();
+            resetForm();
+        }
+
+        // Function to display all feedbacks
+        function displayFeedbacks() {
+            const feedbacks = api.getFeedbacks();
+            const feedbackList = document.getElementById('feedback-list');
+            feedbackList.innerHTML = '';  // Clear current list
+
+            feedbacks.forEach(feedback => {
+                feedbackList.innerHTML += `
+                    <div class="feedback-item">
+                        <p>${feedback.name}: ${feedback.rating}
+                        <button onclick="editFeedback(${feedback.id})">Edit</button>
+                        <button onclick="deleteFeedback(${feedback.id})">Delete</button></p>
+                    </div>
+                `;
+            });
+        }
+
+        // Function to delete feedback
+        function deleteFeedback(id) {
+            api.deleteFeedback(id);
+            displayFeedbacks();
+            displayOverallRatings();
+        }
+
+        // Function to edit feedback (load feedback details into the form)
+        function editFeedback(id) {
+            const feedbacks = api.getFeedbacks();
+            const feedback = feedbacks.find(fb => fb.id === id);
+            document.getElementById('feedbackId').value = feedback.id;
+            document.getElementById('name').value = feedback.name;
+            document.getElementById('rating').value = feedback.rating;
+        }
+
+        // Function to display overall ratings
+        function displayOverallRatings() {
+            const feedbacks = api.getFeedbacks();
+            const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+            feedbacks.forEach(feedback => {
+                ratingCounts[feedback.rating]++;
+            });
+
+            const overallRatings = document.getElementById('overall-ratings');
+            overallRatings.innerHTML = `
+                * ${ratingCounts[1]}<br>
+                ** ${ratingCounts[2]}<br>
+                *** ${ratingCounts[3]}<br>
+                **** ${ratingCounts[4]}<br>
+                ***** ${ratingCounts[5]}
+            `;
+        }
+
+        // Reset form after submission or update
+        function resetForm() {
+            document.getElementById('feedbackId').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('rating').value = '1';
+        }
+    </script>
+</body>
+
+</html>
