@@ -1,110 +1,143 @@
+# Feedback Management System
 
-Overview:
+This project is a simple feedback management system that allows users to submit, edit, delete, and view feedback. It consists of an HTML file (`index.html`) providing the frontend structure, and a JavaScript file (`app.js`) handling API interactions and application logic. The project uses the CrudCrud API to store and retrieve feedback, while Axios is used to manage API requests.
 
-This project is a simple feedback management system where users can submit, edit, delete, and
-view feedback. It consists of an HTML file (index.html) that provides the frontend structure, and a
-JavaScript file (app.js) that handles API interactions and application logic. The project uses the
-CrudCrud API to store and retrieve feedback, while Axios is used to manage the API requests.
+## File Structure
 
-Files Overview:
-- index.html: Contains the structure and elements for user interaction.
-- app.js: Contains the logic for handling feedback operations (CRUD operations) by interacting with
-the backend API (CrudCrud).
-index.html:
+- **index.html**: This file contains the structure and elements for user interaction, including a feedback form, a feedback display section, and an overall ratings display.
+- **app.js**: This file contains the logic for handling CRUD (Create, Read, Update, Delete) operations by interacting with the backend API (CrudCrud) and dynamically updating the feedback display and ratings.
 
-Key elements:
-Overall Ratings Section:
-Displays the number of feedbacks per rating (1 to 5 stars).
+## Frontend Overview
+
+### Overall Ratings Section
+
+The page displays the total number of feedbacks for each rating (1 to 5 stars). This is presented in a div with the ID `overall-ratings`:
+
+```html
 <div id="overall-ratings">
-* 0<br>** 0<br>*** 0<br>**** 0<br>***** 0
+  * 0<br>** 0<br>*** 0<br>**** 0<br>***** 0
 </div>
+```
 
-Feedback Form:
+### Feedback Form
 
-Allows users to enter their name and rating, and submit the feedback.
+Users can submit feedback using a form that includes a field for the user's name and a dropdown for selecting a rating. The form is submitted by triggering the `submitFeedback()` function.
+
+```html
 <form onsubmit="submitFeedback(event)">
-<input type="hidden" id="feedbackId" value="">
-<div class="input-group">
-<label for="name">Enter Your Name:</label>
-<input type="text" id="name" required>
-</div>
-<label for="rating">Choose your rating:</label>
-<select id="rating"> ... </select>
-<button type="submit">Submit</button>
+  <input type="hidden" id="feedbackId" value="">
+  <div class="input-group">
+    <label for="name">Enter Your Name:</label>
+    <input type="text" id="name" required>
+  </div>
+  <label for="rating">Choose your rating:</label>
+  <select id="rating">
+    <!-- Rating options -->
+  </select>
+  <button type="submit">Submit</button>
 </form>
+```
 
-Feedback Display:
-Displays all submitted feedback in a list format.
+### Feedback Display
+
+All feedback submitted by users is shown in the `feedback-list` div. Each feedback entry has "Edit" and "Delete" buttons, allowing the user to update or remove feedback.
+
+```html
 <div id="feedback-list"></div>
+```
 
-Scripts:
-Axios is imported for handling API requests, and app.js is linked to provide functionality.
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="app.js"></script>
-app.js:
-This script handles API interactions, form submission, and dynamically updating the feedback and
-ratings display.
-API Base URL (line 1)
-The project uses the CrudCrud API to store feedback data. The base URL for API interactions is:
-const apiBaseUrl = 'https://crudcrud.com/api/bf0601675d2a4218a1fccc602846c136/feedbacks';
+## API Interaction and Feedback Management
 
-Window onload (line 4)
-On page load, the functions displayFeedbacks() and displayOverallRatings() are called to load
-existing feedback and overall ratings from the API.
+The application uses the CrudCrud API for storing and retrieving feedback data. The base URL for API interactions is defined as:
+
+```javascript
+const apiBaseUrl = 'https://crudcrud.com/api/YOUR_UNIQUE_ENDPOINT/feedbacks';
+```
+
+### Loading Feedback on Page Load
+
+When the page is loaded, the functions `displayFeedbacks()` and `displayOverallRatings()` are automatically called to load existing feedback and display the overall ratings.
+
+```javascript
 window.onload = function () {
-displayFeedbacks();
-displayOverallRatings();
+  displayFeedbacks();
+  displayOverallRatings();
 };
+```
 
-Form Submission and Feedback Handling:
-submitFeedback() (line 9)
-This function handles both the creation and updating of feedback:
+### Submitting Feedback
 
-Create Feedback:
-If no feedback ID is provided, a new feedback is created via an HTTP POST request (line 27):
+The `submitFeedback()` function handles both creating and updating feedback. If no feedback ID is provided, a new feedback entry is created via an HTTP POST request:
+
+```javascript
 await axios.post(apiBaseUrl, { name: name, rating: rating });
+```
 
-Update Feedback:
-If a feedback ID exists, it updates the feedback via an HTTP PUT request (line 19):
-await axios.put(${apiBaseUrl}/${feedbackId}, { name: name, rating: rating });
-Both operations refresh the feedback list and overall ratings after submission.
-Feedback Display Functions:
+If a feedback ID is present, the existing feedback is updated using an HTTP PUT request:
 
-displayFeedbacks() (line 35)
+```javascript
+await axios.put(`${apiBaseUrl}/${feedbackId}`, { name: name, rating: rating });
+```
 
-This function retrieves all feedback from the API using a GET request (line 41) and displays it in the
-HTML element with the ID feedback-list. Each feedback entry includes "Edit" and "Delete" buttons,
-allowing the user to update or remove feedback.
+After submission, the feedback list and overall ratings are refreshed.
+
+### Displaying Feedback
+
+The `displayFeedbacks()` function retrieves all feedback from the API and dynamically displays it in the `feedback-list` div. Feedback entries include options for editing or deleting.
+
+```javascript
 const response = await axios.get(apiBaseUrl);
+```
 
-deleteFeedback() (line 58)
-Deletes a feedback item by its ID using the HTTP DELETE request (line 60). It then refreshes the
-list of feedback and overall ratings.
-await axios.delete(${apiBaseUrl}/${id});
+### Deleting Feedback
 
-editFeedback() (line 67)
-Loads feedback into the form for editing by retrieving it using its ID (line 70) with an HTTP GET
-request.
-const response = await axios.get(${apiBaseUrl}/${id});
+The `deleteFeedback()` function deletes a feedback entry using the HTTP DELETE request:
 
-Overall Ratings Calculation:
+```javascript
+await axios.delete(`${apiBaseUrl}/${id}`);
+```
 
-displayOverallRatings() (line 78)
-This function fetches all feedback from the API (line 80), counts the number of feedbacks per rating
-(1 to 5 stars), and displays the counts in the overall-ratings div.
+After deletion, the feedback list and overall ratings are updated.
+
+### Editing Feedback
+
+The `editFeedback()` function retrieves a specific feedback entry by its ID using a GET request and loads the data into the form for editing:
+
+```javascript
+const response = await axios.get(`${apiBaseUrl}/${id}`);
+```
+
+### Displaying Overall Ratings
+
+The `displayOverallRatings()` function fetches all feedback from the API, counts the number of feedbacks per rating, and displays the counts in the `overall-ratings` div.
+
+```javascript
 const response = await axios.get(apiBaseUrl);
-The rating counts are stored in an object:
+```
+
+Rating counts are stored in an object like so:
+
+```javascript
 const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+```
 
-Reset Form (line 93)
-The form is reset after submission or updating, clearing out the input fields and resetting the rating
-to its default value.
+### Form Reset
 
-API Call Summary:
+After feedback submission or update, the form fields are cleared, and the rating is reset to its default value.
 
-POST (Create Feedback): Line 27
-PUT (Update Feedback): Line 19
-GET (Retrieve All Feedback): Line 41
-DELETE (Delete Feedback): Line 60
-GET (Retrieve Single Feedback for Editing): Line 70
-GET (Retrieve All Feedback for Overall Ratings): Line 80
+```javascript
+document.getElementById('feedbackId').value = '';
+```
+
+## API Call Summary
+
+- **POST (Create Feedback)**: Adds new feedback using the `axios.post` method.
+- **PUT (Update Feedback)**: Updates existing feedback using `axios.put`.
+- **GET (Retrieve All Feedback)**: Fetches all feedback using `axios.get`.
+- **DELETE (Delete Feedback)**: Deletes a feedback entry using `axios.delete`.
+- **GET (Retrieve Single Feedback for Editing)**: Retrieves a single feedback entry using `axios.get`.
+- **GET (Retrieve Feedback for Overall Ratings)**: Fetches all feedback to calculate the overall ratings.
+
+---
+
+This project is a simple yet functional feedback management system that demonstrates how to use a RESTful API to handle basic CRUD operations with the help of JavaScript and Axios.
